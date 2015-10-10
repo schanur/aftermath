@@ -4,7 +4,7 @@ function to_lower () {
 }
 
 function print_login_summary () {
-    
+
     echo -ne "date:\n  "
     date
 
@@ -16,7 +16,7 @@ function print_login_summary () {
     echo -e "\nlast logins:"
     local LOGIN_LINE=""
     while read LOGIN_LINE; do
-	echo "  $LOGIN_LINE"
+        echo "  $LOGIN_LINE"
     done <<< "`lastlog |grep -v --color=never "**Never logged in**"`"
 
     echo -ne "\nmaschine:\n  "
@@ -25,13 +25,13 @@ function print_login_summary () {
     echo -ne "\nnetwork devices:\n"
     local NETWORK_DEVICE=""
     for NETWORK_DEVICE in `cat /proc/net/dev |grep : |sed -e 's/:.*//g' |sed -e 's/\ *//g'`; do
-	echo "  $NETWORK_DEVICE"
+        echo "  $NETWORK_DEVICE"
     done
 
     echo -ne "\nopen connections:\n"
     local CONNECTION=""
     while read CONNECTION; do
-	echo "  $CONNECTION"
+        echo "  $CONNECTION"
     done <<< "`netstat -n |grep ESTABLISHED |sed -e 's/ESTABLISHED//g' |sed -e 's/\ \ /\ /g'`"
 
     #free last lastb
@@ -42,24 +42,24 @@ function get_item_from_list () {
     local IN_LIST=0
     local ITEM_POSITION=0
     for ITEM in $*; do
-	if [ $IN_LIST -eq 0 ]; then
-	    IN_LIST=1
-	    ITEM_POSITION=$ITEM
-	else
-	    if [ $I -eq $ITEM_POSITION ]; then
-		builtin echo $ITEM
-	    fi
-	    (( I++ ))
-	fi
+        if [ $IN_LIST -eq 0 ]; then
+            IN_LIST=1
+            ITEM_POSITION=$ITEM
+        else
+            if [ $I -eq $ITEM_POSITION ]; then
+                builtin echo $ITEM
+            fi
+            (( I++ ))
+        fi
     done
 }
 
 function get_tty_for_pid () {
     while read PS_LINE; do
-	if [ $(get_item_from_list 1 $PS_LINE) = $1 ]; then
-	    echo $(get_item_from_list 6 $PS_LINE)
-	    break
-	fi
+        if [ $(get_item_from_list 1 $PS_LINE) = $1 ]; then
+            echo $(get_item_from_list 6 $PS_LINE)
+            break
+        fi
     done <<< "`ps aux`"
 }
 
@@ -81,19 +81,19 @@ function get_times_for_pid () {
     for STAT_OPT in $STAT; do
         (( I++ ))
         if [ $I -lt 14 ]; then
-	    continue
+            continue
         fi
         if [ $I -gt 17 ]; then
-    	    break
-    	fi
-	builtin echo -n "$STAT_OPT "
+            break
+        fi
+        builtin echo -n "$STAT_OPT "
     done
 }
 
 function get_signal_name () {
     local SIGNAL_NAME=$(builtin kill -l $1 2>/dev/null)
     if [ $? -ne 0 ]; then
-	SIGNAL_NAME="unknown signal"
+        SIGNAL_NAME="unknown signal"
     fi
     builtin echo -n $SIGNAL_NAME
 }
@@ -103,18 +103,18 @@ function calc_times_diff () {
     local DIFF_LIST=""
     local DIFF=""
     for TIME in $PROMPT_SUMMARY_LAST_TIME_USAGE; do
-	local OLD_TIMES[$I]=$TIME
-	(( I++ ))
+        local OLD_TIMES[$I]=$TIME
+        (( I++ ))
     done
     I=0
     local NEW_TIMES=$(get_times_for_pid $$)
     for TIME in $NEW_TIMES; do
-	let DIFF=$TIME-${OLD_TIMES[$I]}
-	DIFF_LIST=$DIFF_LIST$DIFF
-	if [ $I -lt 3 ]; then
-	    DIFF_LIST=$DIFF_LIST" "
-	fi
-	(( I++ ))
+        let DIFF=$TIME-${OLD_TIMES[$I]}
+        DIFF_LIST=$DIFF_LIST$DIFF
+        if [ $I -lt 3 ]; then
+            DIFF_LIST=$DIFF_LIST" "
+        fi
+        (( I++ ))
     done
     PROMPT_SUMMARY_LAST_TIME_USAGE=$NEW_TIMES
     PROMPT_SUMMARY_TIME_DIFF_LIST=$DIFF_LIST
@@ -124,8 +124,8 @@ function format_time () {
     local TIME=$1
     local LENGTH=${#TIME}
     while [ $LENGTH -lt 3 ]; do
-	TIME="0$TIME"
-	(( LENGTH++ ))
+        TIME="0$TIME"
+        (( LENGTH++ ))
     done
     local TIME_MILLISECONDS=${TIME: -2}
     local TIME_SECONDS=${TIME:0:$LENGTH-2}
@@ -138,49 +138,49 @@ function format_time () {
 function get_time_diff_item () {
     local I=0
     for TIME in $PROMPT_SUMMARY_TIME_DIFF_LIST; do
-	if [ $I -eq $1 ]; then
-	    builtin echo $TIME
-	    break
-	fi
-	(( I++ ))
+        if [ $I -eq $1 ]; then
+            builtin echo $TIME
+            break
+        fi
+        (( I++ ))
     done
 }
 
 function color_per_exit_code () {
     if [ $PROMPT_SUMMARY_EXIT_CODE -eq 0 ]; then
-	PROMPT_SUMMARY_EXIT_CODE_COLOR="33"
+        PROMPT_SUMMARY_EXIT_CODE_COLOR="33"
     else
-	PROMPT_SUMMARY_EXIT_CODE_COLOR="31"
+        PROMPT_SUMMARY_EXIT_CODE_COLOR="31"
     fi
 }
 
 function calc_variable_string_length () {
     (( PROMPT_SUMMARY_STRING_LENGTH=
-	${#PROMPT_SUMMARY_EXIT_CODE}+
-	${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
-	${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
-	${#PROMPT_SUMMARY_STATIC_STRING_LENGTH}
+        ${#PROMPT_SUMMARY_EXIT_CODE}+
+        ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
+        ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
+        ${#PROMPT_SUMMARY_STATIC_STRING_LENGTH}
     ))
 }
 
-#11 $EXIT_CODE 15 $USER_TIME 6 $SYS_TIME 6 $FILL_STRING 11 $PID 
+#11 $EXIT_CODE 15 $USER_TIME 6 $SYS_TIME 6 $FILL_STRING 11 $PID
 function get_fill_string () {
     #return
     calc_variable_string_length
     local FILL_STRING_LENGTH=$COLUMNS
     (( FILL_STRING_LENGTH-=($PROMPT_SUMMARY_STRING_LENGTH+54) ))
     if [ $FILL_STRING_LENGTH -ne $PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH ]; then
-	PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=$FILL_STRING_LENGTH
-	local FILL_STRING=""
-	while [ $FILL_STRING_LENGTH -gt 15 ]; do
-	    (( FILL_STRING_LENGTH-=16 ))
-	    FILL_STRING=$FILL_STRING----------------
-	done
-	while [ $FILL_STRING_LENGTH -gt 0 ]; do
-	    (( FILL_STRING_LENGTH-- ))
-	    FILL_STRING=$FILL_STRING-
-	done
-	PROMPT_SUMMARY_FILL_STRING=$FILL_STRING
+        PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=$FILL_STRING_LENGTH
+        local FILL_STRING=""
+        while [ $FILL_STRING_LENGTH -gt 15 ]; do
+            (( FILL_STRING_LENGTH-=16 ))
+            FILL_STRING=$FILL_STRING----------------
+        done
+        while [ $FILL_STRING_LENGTH -gt 0 ]; do
+            (( FILL_STRING_LENGTH-- ))
+            FILL_STRING=$FILL_STRING-
+        done
+        PROMPT_SUMMARY_FILL_STRING=$FILL_STRING
     fi
     builtin echo -n $PROMPT_SUMMARY_FILL_STRING
 }
@@ -189,11 +189,11 @@ function pre_prompt () {
     PROMPT_SUMMARY_EXIT_CODE=$(builtin echo $?)
     color_per_exit_code
     if [ $PROMPT_SUMMARY_EXIT_CODE -gt 128 ]; then
-	if [ $(to_lower $PROMPT_SUMMARY_OPTION_SHOW_SIGNAL) = "yes" ]; then
-	    local SIGNAL_NO=$PROMPT_SUMMARY_EXIT_CODE
-	    (( SIGNAL_NO-=128 ))
-	    PROMPT_SUMMARY_EXIT_CODE="$PROMPT_SUMMARY_EXIT_CODE ($(get_signal_name $SIGNAL_NO))"
-	fi
+        if [ $(to_lower $PROMPT_SUMMARY_OPTION_SHOW_SIGNAL) = "yes" ]; then
+            local SIGNAL_NO=$PROMPT_SUMMARY_EXIT_CODE
+            (( SIGNAL_NO-=128 ))
+            PROMPT_SUMMARY_EXIT_CODE="$PROMPT_SUMMARY_EXIT_CODE ($(get_signal_name $SIGNAL_NO))"
+        fi
     fi
     calc_times_diff
     PROMPT_SUMMARY_FORMATED_TIME_USER=$(format_time $(get_time_diff_item 2))
