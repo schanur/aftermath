@@ -17,40 +17,6 @@ function to_lower {
     echo $1 |tr '[:upper:]' '[:lower:]'
 }
 
-# function print_login_summary () {
-
-#     echo -ne "date:\n  "
-#     date
-
-#     #echo -e "\ngroups:"
-#     #for ITEM in `id |awk '{print $3}' |sed -e 's/groups=//g' |sed -e 's/,/ /g'`; do
-#     #    echo "  `echo $ITEM |sed -e 's/(/ (/g'`"
-#     #done
-
-#     echo -e "\nlast logins:"
-#     local LOGIN_LINE=""
-#     while read LOGIN_LINE; do
-#         echo "  $LOGIN_LINE"
-#     done <<< "`lastlog |grep -v --color=never "**Never logged in**"`"
-
-#     echo -ne "\nmaschine:\n  "
-#     hostname
-
-#     echo -ne "\nnetwork devices:\n"
-#     local NETWORK_DEVICE=""
-#     for NETWORK_DEVICE in `cat /proc/net/dev |grep : |sed -e 's/:.*//g' |sed -e 's/\ *//g'`; do
-#         echo "  $NETWORK_DEVICE"
-#     done
-
-#     echo -ne "\nopen connections:\n"
-#     local CONNECTION=""
-#     while read CONNECTION; do
-#         echo "  $CONNECTION"
-#     done <<< "`netstat -n |grep ESTABLISHED |sed -e 's/ESTABLISHED//g' |sed -e 's/\ \ /\ /g'`"
-
-#     #free last lastb
-# }
-
 function get_item_from_list {
     local FIELD_NO=${1}
     shift
