@@ -140,7 +140,7 @@ function pre_prompt {
     PROMPT_SUMMARY_EXIT_CODE=$(builtin echo $?)
     color_per_exit_code
     if [ $PROMPT_SUMMARY_EXIT_CODE -gt 128 ]; then
-        if [ $(to_lower "x_$PROMPT_SUMMARY_OPTION_SHOW_SIGNAL") = 'x_yes' ]; then
+        if [ !$(to_lower "x_$PROMPT_SUMMARY_OPTION_SHOW_SIGNAL") = 'x_no' ]; then
             local SIGNAL_NO=$PROMPT_SUMMARY_EXIT_CODE
             (( SIGNAL_NO-=128 ))
             PROMPT_SUMMARY_EXIT_CODE="$PROMPT_SUMMARY_EXIT_CODE ($(get_signal_name $SIGNAL_NO))"
