@@ -3,9 +3,9 @@ Get a nice summary line after each command you run on your shell.
 
 ## Features
    * Runs under Zsh and Bash.
-   * Show userspace and kernel time of all progrms that you run.
+   * Show userspace and kernel time of all programs that you run.
    * Show current pid of shell and tty.
-   * In case of failure/suspend/etc, give the signal name to the exit code.
+   * In case of failure/suspend/etc, give the signal name and the exit code.
    * No external dependencies.
 
 ## How it looks like
