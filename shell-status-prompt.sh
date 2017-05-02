@@ -72,12 +72,11 @@ function calc_times_diff {
     local DIFF
     local NEW_TIMES=$(get_times_for_pid $$)
     local TEMP_VAR
-
     test ${SHELL_NAME} = "zsh" && setopt sh_word_split
     for TIME in $NEW_TIMES; do
-        let TEMP_VAR=$TIME-${PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]}
-        PROMPT_SUMMARY_TIME_DIFF[${I}]=$TEMP_VAR
-        PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=${TIME}
+        (( TEMP_VAR = TIME - PROMPT_SUMMARY_LAST_TIME_USAGE[I] ))
+        PROMPT_SUMMARY_TIME_DIFF[${I}]=${TEMP_VAR}
+        PROMPT_SUMMARY_LAST_TIME_USAGE[$I]=${TIME}
         (( I++ ))
     done
     test ${SHELL_NAME} = "zsh" && unsetopt sh_word_split
@@ -93,8 +92,8 @@ function format_time {
     local TIME_MILLISECONDS=${TIME: -2}
     local TIME_SECONDS=${TIME:0:$LENGTH-2}
     local TIME_MINUTES=0
-    (( TIME_MINUTES=$TIME_SECONDS/60 ))
-    (( TIME_SECONDS%=60 ))
+    (( TIME_MINUTES = TIME_SECONDS / 60 ))
+    (( TIME_SECONDS = TIME_SECONDS % 60 ))
     builtin echo -n "${TIME_MINUTES}m${TIME_SECONDS}.${TIME_MILLISECONDS}s"
 }
 
@@ -146,9 +145,10 @@ function pre_prompt {
             PROMPT_SUMMARY_EXIT_CODE="$PROMPT_SUMMARY_EXIT_CODE ($(get_signal_name $SIGNAL_NO))"
         fi
     fi
+
     calc_times_diff
-    PROMPT_SUMMARY_FORMATED_TIME_USER=$(format_time $PROMPT_SUMMARY_TIME_DIFF[3])
-    PROMPT_SUMMARY_FORMATED_TIME_SYS=$(format_time $PROMPT_SUMMARY_TIME_DIFF[4])
+    PROMPT_SUMMARY_FORMATED_TIME_USER=$(format_time ${PROMPT_SUMMARY_TIME_DIFF[3]})
+    PROMPT_SUMMARY_FORMATED_TIME_SYS=$(format_time ${PROMPT_SUMMARY_TIME_DIFF[4]})
 }
 
 PROMPT_COMMAND=pre_prompt
