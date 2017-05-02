@@ -36,7 +36,7 @@ function init_prompt_summary {
     PROMPT_SUMMARY_FILL_STRING=''
     PROMPT_SUMMARY_TTY=$(get_tty_for_pid $$)
     PROMPT_SUMMARY_STATIC_STRING_LENGTH=0
-    local pid=$$
+    local pid=${$}
     (( PROMPT_SUMMARY_STATIC_STRING_LENGTH=${#PROMPT_SUMMARY_TTY} + ${#pid} ))
 }
 
@@ -70,8 +70,10 @@ function calc_times_diff {
     local I=1
     local DIFF_LIST=''
     local DIFF
-    local NEW_TIMES=$(get_times_for_pid $$)
+    local NEW_TIMES
     local TEMP_VAR
+
+    NEW_TIMES=$(get_times_for_pid ${$})
     test ${SHELL_NAME} = "zsh" && setopt sh_word_split
     for TIME in $NEW_TIMES; do
         (( TEMP_VAR = TIME - PROMPT_SUMMARY_LAST_TIME_USAGE[I] ))
