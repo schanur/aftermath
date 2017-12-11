@@ -1,6 +1,7 @@
-# declare -a OLD_TIMES
 declare -a PROMPT_SUMMARY_LAST_TIME_USAGE
 declare -a PROMPT_SUMMARY_TIME_DIFF
+declare -a PROMPT_SUMMARY_VARS # 1=working directory; 2=working directory string length
+
 
 if   [ "$(echo $ZSH_VERSION)"  != "" ]; then
     SHELL_NAME="zsh"
@@ -38,6 +39,7 @@ function init_prompt_summary {
     PROMPT_SUMMARY_STATIC_STRING_LENGTH=0
     local pid=${$}
     (( PROMPT_SUMMARY_STATIC_STRING_LENGTH=${#PROMPT_SUMMARY_TTY} + ${#pid} ))
+    PROMPT_SUMMARY_VARS[0]=""
 }
 
 function get_times_for_pid {
@@ -112,7 +114,8 @@ function calc_variable_string_length {
         ${#PROMPT_SUMMARY_EXIT_CODE}+
         ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
         ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
-        ${#PROMPT_SUMMARY_STATIC_STRING_LENGTH}
+        ${#PROMPT_SUMMARY_STATIC_STRING_LENGTH}+
+        ${#PROMPT_SUMMARY_VARS[1]}
     ))
 }
 
@@ -120,7 +123,7 @@ function calc_variable_string_length {
 function get_fill_string {
     calc_variable_string_length
     local FILL_STRING_LENGTH=$COLUMNS
-    (( FILL_STRING_LENGTH-=($PROMPT_SUMMARY_STRING_LENGTH+54) ))
+    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 63) ))
     if [ $FILL_STRING_LENGTH -ne $PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH ]; then
         PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=$FILL_STRING_LENGTH
         local FILL_STRING=""
@@ -151,6 +154,11 @@ function pre_prompt {
     calc_times_diff
     PROMPT_SUMMARY_FORMATED_TIME_USER=$(format_time ${PROMPT_SUMMARY_TIME_DIFF[3]})
     PROMPT_SUMMARY_FORMATED_TIME_SYS=$(format_time ${PROMPT_SUMMARY_TIME_DIFF[4]})
+
+    if [ "${PWD}" != "${PROMPT_SUMMARY_VARS[1]}" ]; then
+        # true
+        PROMPT_SUMMARY_VARS[1]="${PWD}"
+    fi
 }
 
 PROMPT_COMMAND=pre_prompt

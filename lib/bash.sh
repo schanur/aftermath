@@ -12,6 +12,9 @@ PROMPT_SUMMARY_STATS='\[\033[1;37m\]---=[ \
 \[\033[1;37m\]| \
 \[\033[1;36m\]tty: \
 \[\033[1;33m\]$PROMPT_SUMMARY_TTY \
+\[\033[1;37m\]| \
+\[\033[1;36m\]path: \
+\[\033[1;33m\]${PROMPT_SUMMARY_VARS[1]} \
 \[\033[1;37m\]]=\
 $(get_fill_string)\n$(tput sgr0)'
 
