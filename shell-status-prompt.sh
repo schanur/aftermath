@@ -1,6 +1,14 @@
 declare -a PROMPT_SUMMARY_LAST_TIME_USAGE
 declare -a PROMPT_SUMMARY_TIME_DIFF
-declare -a PROMPT_SUMMARY_VARS # 1=working directory; 2=working directory string length
+
+# 0  ???
+# 1  working directory;
+# 2  working directory string length
+
+# 10 Static variable list length
+# 11 TTY
+# 12 Hostname
+declare -a PROMPT_SUMMARY_VARS
 
 
 if   [ "$(echo $ZSH_VERSION)"  != "" ]; then
@@ -35,11 +43,13 @@ function init_prompt_summary {
     done
     PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=0
     PROMPT_SUMMARY_FILL_STRING=''
-    PROMPT_SUMMARY_TTY=$(get_tty_for_pid $$)
+    PROMPT_SUMMARY_VARS[11]=$(get_tty_for_pid $$)
     PROMPT_SUMMARY_STATIC_STRING_LENGTH=0
     local pid=${$}
-    (( PROMPT_SUMMARY_STATIC_STRING_LENGTH=${#PROMPT_SUMMARY_TTY} + ${#pid} ))
+    (( PROMPT_SUMMARY_STATIC_STRING_LENGTH=${#PROMPT_SUMMARY_VARS[11]} + ${#pid} ))
     PROMPT_SUMMARY_VARS[0]=""
+    PROMPT_SUMMARY_VARS[12]="$(hostname)"
+    calc_static_variable_list_length
 }
 
 function get_times_for_pid {
@@ -110,7 +120,8 @@ function color_per_exit_code {
 }
 
 function calc_variable_string_length {
-    (( PROMPT_SUMMARY_STRING_LENGTH=
+    ((
+        PROMPT_SUMMARY_STRING_LENGTH=
         ${#PROMPT_SUMMARY_EXIT_CODE}+
         ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
         ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
