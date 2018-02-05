@@ -37,6 +37,17 @@ function get_tty_for_pid () {
     get_item_from_list 7 "$(ps aux | grep ${1} | head -n 1)"
 }
 
+function prompt_summary_debug_vars {
+    local I=0
+
+    while [ ${I} -le 20 ]; do
+        if [ "${PROMPT_SUMMARY_VARS[${I}]}" != "" ]; then
+            echo "${I}: ${PROMPT_SUMMARY_VARS[${I}]}"
+        fi
+        (( I = I + 1 ))
+    done
+}
+
 function init_prompt_summary {
     for I in $(seq 4); do
         PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=0
