@@ -8,6 +8,20 @@ declare -a PROMPT_SUMMARY_TIME_DIFF
 # 10 Static variable list length
 # 11 TTY
 # 12 Hostname
+# 13 PID
+
+# 60 Last command exit code
+# 60 Last command exit code color string
+
+# 70 Time diff 1
+# 71 Time diff 2
+# 72 Time diff 3
+# 73 Time diff 4
+
+# 76 Last command formated sys time
+# 77 Last command formated user time
+
+
 declare -a PROMPT_SUMMARY_VARS
 
 
@@ -40,7 +54,7 @@ function get_tty_for_pid () {
 function prompt_summary_debug_vars {
     local I=0
 
-    while [ ${I} -le 20 ]; do
+    while [ ${I} -le 80 ]; do
         if [ "${PROMPT_SUMMARY_VARS[${I}]}" != "" ]; then
             echo "${I}: ${PROMPT_SUMMARY_VARS[${I}]}"
         fi
@@ -55,12 +69,13 @@ function init_prompt_summary {
     PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=0
     PROMPT_SUMMARY_FILL_STRING=''
     PROMPT_SUMMARY_VARS[11]=$(get_tty_for_pid $$)
-    PROMPT_SUMMARY_STATIC_STRING_LENGTH=0
-    local pid=${$}
-    (( PROMPT_SUMMARY_STATIC_STRING_LENGTH=${#PROMPT_SUMMARY_VARS[11]} + ${#pid} ))
-    PROMPT_SUMMARY_VARS[0]=""
+    # PROMPT_SUMMARY_STATIC_STRING_LENGTH=0
+    # local pid=${$}
+    # (( PROMPT_SUMMARY_STATIC_STRING_LENGTH=${#PROMPT_SUMMARY_VARS[11]} + ${#pid} ))
+    # PROMPT_SUMMARY_VARS[0]=""
     PROMPT_SUMMARY_VARS[12]="$(hostname)"
     calc_static_variable_list_length
+    echo "static length: ${#PROMPT_SUMMARY_VARS[10]}"
 }
 
 function get_times_for_pid {
@@ -136,8 +151,17 @@ function calc_variable_string_length {
         ${#PROMPT_SUMMARY_EXIT_CODE}+
         ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
         ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
-        ${#PROMPT_SUMMARY_STATIC_STRING_LENGTH}+
+        ${PROMPT_SUMMARY_VARS[10]}+
         ${#PROMPT_SUMMARY_VARS[1]}
+    ))
+}
+
+# Print length of all
+function calc_static_variable_list_length {
+    ((
+        PROMPT_SUMMARY_VARS[10] =
+        ${#PROMPT_SUMMARY_VARS[11]}+
+        ${#PROMPT_SUMMARY_VARS[12]}
     ))
 }
 
@@ -145,7 +169,8 @@ function calc_variable_string_length {
 function get_fill_string {
     calc_variable_string_length
     local FILL_STRING_LENGTH=$COLUMNS
-    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 63) ))
+    #  + ${PROMPT_SUMMARY_VARS[10]}
+    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 73) ))
     if [ $FILL_STRING_LENGTH -ne $PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH ]; then
         PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=$FILL_STRING_LENGTH
         local FILL_STRING=""
@@ -198,5 +223,6 @@ case ${SHELL_NAME} in
 esac
 
 init_prompt_summary
+prompt_summary_debug_vars
 
 PROMPT_SUMMARY_LOADED=yes
