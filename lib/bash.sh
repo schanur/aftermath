@@ -12,6 +12,8 @@ PROMPT_SUMMARY_STATS='\[\033[1;37m\]---=[ \
 \[\033[1;37m\]| \
 \[\033[1;36m\]tty: \
 \[\033[1;33m\]${PROMPT_SUMMARY_VARS[11]} \
+\[\033[1;36m\]shell: \
+\[\033[1;33m\]${PROMPT_SUMMARY_VARS[14]} \
 \[\033[1;37m\]| \
 \[\033[1;36m\]hostname: \
 \[\033[1;33m\]${PROMPT_SUMMARY_VARS[12]} \

@@ -9,6 +9,7 @@ declare -a PROMPT_SUMMARY_TIME_DIFF
 # 11 TTY
 # 12 Hostname
 # 13 PID
+# 14 Shell string
 
 # 60 Last command exit code
 # 60 Last command exit code color string
@@ -161,7 +162,8 @@ function calc_static_variable_list_length {
     ((
         PROMPT_SUMMARY_VARS[10] =
         ${#PROMPT_SUMMARY_VARS[11]}+
-        ${#PROMPT_SUMMARY_VARS[12]}
+        ${#PROMPT_SUMMARY_VARS[12]}+
+        ${#PROMPT_SUMMARY_VARS[14]}
     ))
 }
 
@@ -170,7 +172,7 @@ function get_fill_string {
     calc_variable_string_length
     local FILL_STRING_LENGTH=$COLUMNS
     #  + ${PROMPT_SUMMARY_VARS[10]}
-    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 73) ))
+    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 82) ))
     if [ $FILL_STRING_LENGTH -ne $PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH ]; then
         PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=$FILL_STRING_LENGTH
         local FILL_STRING=""
@@ -211,12 +213,15 @@ function pre_prompt {
 PROMPT_COMMAND=pre_prompt
 
 
+PROMPT_SUMMARY_VARS[14]="unknown"
 case ${SHELL_NAME} in
     bash)
+        PROMPT_SUMMARY_VARS[14]="bash"
         CURRENT_PATH="$(dirname $BASH_SOURCE)"
         source "${CURRENT_PATH}/lib/bash.sh"
         ;;
     zsh)
+        PROMPT_SUMMARY_VARS[14]="zsh"
         CURRENT_PATH="$(dirname $(readlink -e ${(%):-%x}))"
         source "${CURRENT_PATH}/lib/zsh.sh"
         ;;
