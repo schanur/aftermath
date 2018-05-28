@@ -9,7 +9,7 @@ declare -a PROMPT_SUMMARY_TIME_DIFF
 # 11 TTY
 # 12 Hostname
 # 13 PID
-# 14 Shell string
+# 14 Shell name
 
 # 60 Last command exit code
 # 60 Last command exit code color string
@@ -70,10 +70,6 @@ function init_prompt_summary {
     PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=0
     PROMPT_SUMMARY_FILL_STRING=''
     PROMPT_SUMMARY_VARS[11]=$(get_tty_for_pid $$)
-    # PROMPT_SUMMARY_STATIC_STRING_LENGTH=0
-    # local pid=${$}
-    # (( PROMPT_SUMMARY_STATIC_STRING_LENGTH=${#PROMPT_SUMMARY_VARS[11]} + ${#pid} ))
-    # PROMPT_SUMMARY_VARS[0]=""
     PROMPT_SUMMARY_VARS[12]="$(hostname)"
     calc_static_variable_list_length
     echo "static length: ${#PROMPT_SUMMARY_VARS[10]}"
@@ -172,7 +168,7 @@ function get_fill_string {
     calc_variable_string_length
     local FILL_STRING_LENGTH=$COLUMNS
     #  + ${PROMPT_SUMMARY_VARS[10]}
-    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 82) ))
+    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 83) ))
     if [ $FILL_STRING_LENGTH -ne $PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH ]; then
         PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=$FILL_STRING_LENGTH
         local FILL_STRING=""
@@ -205,7 +201,6 @@ function pre_prompt {
     PROMPT_SUMMARY_FORMATED_TIME_SYS=$(format_time ${PROMPT_SUMMARY_TIME_DIFF[4]})
 
     if [ "${PWD}" != "${PROMPT_SUMMARY_VARS[1]}" ]; then
-        # true
         PROMPT_SUMMARY_VARS[1]="${PWD}"
     fi
 }
