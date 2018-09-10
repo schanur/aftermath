@@ -1,4 +1,4 @@
-PROMPT_SUMMARY_STATS='\[\033[1;37m\]---=[ \
+PROMPT_SUMMARY_STATS='\[\033[1;100m\]\[\033[1;37m\]---=[ \
 \[\033[1;36m\]ret: \
 \[\033[1;${PROMPT_SUMMARY_EXIT_CODE_COLOR}m\]$PROMPT_SUMMARY_EXIT_CODE \
 \[\033[1;37m\]| \
@@ -21,6 +21,6 @@ PROMPT_SUMMARY_STATS='\[\033[1;37m\]---=[ \
 \[\033[1;36m\]path: \
 \[\033[1;33m\]${PROMPT_SUMMARY_VARS[1]} \
 \[\033[1;37m\]]=\
-$(get_fill_string)\n$(tput sgr0)'
+$(get_fill_string)\[\033[1;49m\]\n$(tput sgr0)'
 
 PS1="${PROMPT_SUMMARY_STATS}"
