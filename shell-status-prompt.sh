@@ -88,7 +88,7 @@ function get_times_for_pid {
         if [ $I -gt 17 ]; then
             break
         fi
-        builtin echo -ne "$STAT_OPT\n"
+        builtin echo -ne "${STAT_OPT}\n"
     done
     test ${SHELL_NAME} = "zsh" && unsetopt sh_word_split
 }
@@ -189,10 +189,10 @@ function pre_prompt {
     PROMPT_SUMMARY_EXIT_CODE=$(builtin echo $?)
     color_per_exit_code
     if [ $PROMPT_SUMMARY_EXIT_CODE -gt 128 ]; then
-        if [ !$(to_lower "x_$PROMPT_SUMMARY_OPTION_SHOW_SIGNAL") = 'x_no' ]; then
+        if [ !$(to_lower "x_${PROMPT_SUMMARY_OPTION_SHOW_SIGNAL}") = 'x_no' ]; then
             local SIGNAL_NO=$PROMPT_SUMMARY_EXIT_CODE
             (( SIGNAL_NO-=128 ))
-            PROMPT_SUMMARY_EXIT_CODE="$PROMPT_SUMMARY_EXIT_CODE ($(get_signal_name $SIGNAL_NO))"
+            PROMPT_SUMMARY_EXIT_CODE="${PROMPT_SUMMARY_EXIT_CODE} ($(get_signal_name ${SIGNAL_NO}))"
         fi
     fi
 
@@ -212,7 +212,7 @@ PROMPT_SUMMARY_VARS[14]="unknown"
 case ${SHELL_NAME} in
     bash)
         PROMPT_SUMMARY_VARS[14]="bash"
-        CURRENT_PATH="$(dirname $BASH_SOURCE)"
+        CURRENT_PATH="$(dirname ${BASH_SOURCE})"
         source "${CURRENT_PATH}/lib/bash.sh"
         ;;
     zsh)
