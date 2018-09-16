@@ -15,8 +15,8 @@ Get a nice summary line after each command you run on your shell.
 ## Installation
    * Clone this repository or download and entract the snapshot to a location readable to you:
      git clone https://github.com/schanur/shell-status-prompt.git
-   * Add the following line to your .bashrc or .zshrc file:
      source "/path/of/this/repo/shell-status-prompt.sh"
+   * Add the following line to the end of your .bashrc or .zshrc file:
 
 You are done. You see your new status line after you restart your shell session.
 
