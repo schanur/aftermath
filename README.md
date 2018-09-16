@@ -23,6 +23,10 @@ Get a nice summary line after each command you run on your shell.
 You are done. You see your new status line after you restart your shell session.
 
 
+## Credits
+   * Many thanks to Joe Block (@unixorn) for the suggested name "Aftermath" which is from now on the project name.
+
+
 ## Contribution
 Features missing? Give me a hint or implement it yourself and create a pull request.
 If you like it (or even if you don't), a short feedback would be nice.
