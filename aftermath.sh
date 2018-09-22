@@ -41,6 +41,7 @@ function to_lower {
     echo $1 |tr '[:upper:]' '[:lower:]'
 }
 
+
 function get_item_from_list {
     local FIELD_NO=${1}
     shift
@@ -48,9 +49,11 @@ function get_item_from_list {
     echo ${*} | sed -e 's/\ \+/\ /g' |cut -f ${FIELD_NO} -d ' '
 }
 
+
 function get_tty_for_pid () {
     get_item_from_list 7 "$(ps aux | grep ${1} | head -n 1)"
 }
+
 
 function prompt_summary_debug_vars {
     local I=0
@@ -63,6 +66,7 @@ function prompt_summary_debug_vars {
     done
 }
 
+
 function init_prompt_summary {
     for I in $(seq 4); do
         PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=0
@@ -74,6 +78,7 @@ function init_prompt_summary {
     calc_static_variable_list_length
     echo "static length: ${#PROMPT_SUMMARY_VARS[10]}"
 }
+
 
 function get_times_for_pid {
     local I=0
@@ -93,6 +98,7 @@ function get_times_for_pid {
     test ${SHELL_NAME} = "zsh" && unsetopt sh_word_split
 }
 
+
 function get_signal_name {
     local SIGNAL_NAME=$(builtin kill -l $1 2>/dev/null)
     if [ $? -ne 0 ]; then
@@ -100,6 +106,7 @@ function get_signal_name {
     fi
     builtin echo -n $SIGNAL_NAME
 }
+
 
 function calc_times_diff {
     local I=1
@@ -119,6 +126,7 @@ function calc_times_diff {
     test ${SHELL_NAME} = "zsh" && unsetopt sh_word_split
 }
 
+
 function format_time {
     local TIME=$1
     local LENGTH=${#TIME}
@@ -134,6 +142,7 @@ function format_time {
     builtin echo -n "${TIME_MINUTES}m${TIME_SECONDS}.${TIME_MILLISECONDS}s"
 }
 
+
 function color_per_exit_code {
     if [ $PROMPT_SUMMARY_EXIT_CODE -eq 0 ]; then
         PROMPT_SUMMARY_EXIT_CODE_COLOR='33'
@@ -141,6 +150,7 @@ function color_per_exit_code {
         PROMPT_SUMMARY_EXIT_CODE_COLOR='31'
     fi
 }
+
 
 function calc_variable_string_length {
     ((
@@ -153,6 +163,7 @@ function calc_variable_string_length {
     ))
 }
 
+
 # Print length of all
 function calc_static_variable_list_length {
     ((
@@ -162,6 +173,7 @@ function calc_static_variable_list_length {
         ${#PROMPT_SUMMARY_VARS[14]}
     ))
 }
+
 
 # TODO: reuse old fill string as long as screen size has not changed.
 function get_fill_string {
@@ -185,6 +197,7 @@ function get_fill_string {
     builtin echo -n $PROMPT_SUMMARY_FILL_STRING
 }
 
+
 function pre_prompt {
     PROMPT_SUMMARY_EXIT_CODE=$(builtin echo $?)
     color_per_exit_code
@@ -204,6 +217,7 @@ function pre_prompt {
         PROMPT_SUMMARY_VARS[1]="${PWD}"
     fi
 }
+
 
 PROMPT_COMMAND=pre_prompt
 
