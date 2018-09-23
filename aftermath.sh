@@ -31,7 +31,7 @@ if   [ -n "${BASH_VERSION}" ]; then
 elif [ -n "${ZSH_VERSION}"  ]; then
     SHELL_NAME="zsh"
 else
-    echo "shell-status-prompt.sh: No supported shell (Currently supported: bash and zsh)"
+    echo "aftermath.sh: No supported shell (Currently supported: bash and zsh)"
     return
 fi
 
