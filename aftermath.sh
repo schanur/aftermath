@@ -55,18 +55,6 @@ function get_tty_for_pid () {
 }
 
 
-function prompt_summary_debug_vars {
-    local I=0
-
-    while [ ${I} -le 80 ]; do
-        if [ "${PROMPT_SUMMARY_VARS[${I}]}" != "" ]; then
-            echo "${I}: ${PROMPT_SUMMARY_VARS[${I}]}"
-        fi
-        (( I = I + 1 ))
-    done
-}
-
-
 function init_prompt_summary {
     for I in $(seq 4); do
         PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=0
@@ -219,6 +207,62 @@ function pre_prompt {
 }
 
 
+# Command line interface
+function aftermath {
+    local HELP="
+
+aftermath:
+----------
+
+aftermath COMMAND
+
+Valid commands are:
+
+       debug-vars :
+              Print all variables. This includes configuration variables,
+              runtime variables and all remaining internal state like
+              temporary variables required to calculate durations.
+
+       help | --help | -h :
+              Print a short description of all aftermath commands.
+
+"
+    case ${1} in
+
+        'debug-vars')
+            local I=0
+
+            while [ ${I} -le 80 ]; do
+                if [ "${PROMPT_SUMMARY_VARS[${I}]}" != "" ]; then
+                    echo "${I}: ${PROMPT_SUMMARY_VARS[${I}]}"
+                fi
+                (( I = I + 1 ))
+            done
+            ;;
+
+        'help'|'--help'|'-h')
+            echo ${HELP}
+            ;;
+
+        '')
+            echo 'Missing parameter.' >&2
+            echo
+            echo ${HELP}
+            return 1
+            ;;
+
+        *)
+            echo "Invalid parameter: ${*}" >&2
+            echo
+            echo ${HELP}
+            return 1
+            ;;
+
+    esac
+}
+
+
+
 PROMPT_COMMAND=pre_prompt
 
 
@@ -237,6 +281,4 @@ case ${SHELL_NAME} in
 esac
 
 init_prompt_summary
-prompt_summary_debug_vars
-
 PROMPT_SUMMARY_LOADED=yes
