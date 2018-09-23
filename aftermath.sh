@@ -26,10 +26,10 @@ declare -a PROMPT_SUMMARY_TIME_DIFF
 declare -a PROMPT_SUMMARY_VARS
 
 
-if   [ "$(echo $ZSH_VERSION)"  != "" ]; then
-    SHELL_NAME="zsh"
-elif [ "$(echo $BASH_VERSION)" != "" ]; then
+if   [ -n "${BASH_VERSION}" ]; then
     SHELL_NAME="bash"
+elif [ -n "${ZSH_VERSION}"  ]; then
+    SHELL_NAME="zsh"
 else
     echo "shell-status-prompt.sh: No supported shell (Currently supported: bash and zsh)"
     return
