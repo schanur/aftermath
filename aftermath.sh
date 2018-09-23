@@ -14,10 +14,10 @@ declare -a PROMPT_SUMMARY_TIME_DIFF
 # 60 Last command exit code
 # 60 Last command exit code color string
 
-# 70 Time diff 1
-# 71 Time diff 2
-# 72 Time diff 3
-# 73 Time diff 4
+# 70 Time diff 1 (utime)  user mode + guest time
+# 71 Time diff 2 (stime)  kernel mode
+# 72 Time diff 3 (cutime) time waited for children in user mode + guest time + cguest time(time spent running a virtual CPU)
+# 73 Time diff 4 (cstime) time waited for children in kernel mode
 
 # 76 Last command formated sys time
 # 77 Last command formated user time
