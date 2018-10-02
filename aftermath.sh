@@ -22,7 +22,8 @@ declare -a PROMPT_SUMMARY_TIME_DIFF
 # 76 Last command formated sys time
 # 77 Last command formated user time
 
-
+# 80 Line separation string
+# 81 Current formated aftermath line
 declare -a PROMPT_SUMMARY_VARS
 
 
@@ -35,112 +36,10 @@ else
     return
 fi
 
-echo "Shell: ${SHELL_NAME}"
 
-function to_lower {
-    echo $1 |tr '[:upper:]' '[:lower:]'
-}
-
-
-function get_item_from_list {
-    local FIELD_NO=${1}
-    shift
-
-    echo ${*} | sed -e 's/\ \+/\ /g' |cut -f ${FIELD_NO} -d ' '
-}
-
-
-function get_tty_for_pid () {
-    get_item_from_list 7 "$(ps aux | grep ${1} | head -n 1)"
-}
-
-
-function init_prompt_summary {
-    for I in $(seq 4); do
-        PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=0
-    done
-    PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=0
-    PROMPT_SUMMARY_FILL_STRING=''
-    PROMPT_SUMMARY_VARS[11]=$(get_tty_for_pid $$)
-    PROMPT_SUMMARY_VARS[12]="$(hostname)"
-    calc_static_variable_list_length
-    echo "static length: ${#PROMPT_SUMMARY_VARS[10]}"
-}
-
-
-function get_times_for_pid {
-    local I=0
-    local STAT=''
-    builtin read STAT < /proc/$1/stat
-    test ${SHELL_NAME} = "zsh" && setopt sh_word_split
-    for STAT_OPT in $STAT; do
-        (( I++ ))
-        if [ $I -lt 14 ]; then
-            continue
-        fi
-        if [ $I -gt 17 ]; then
-            break
-        fi
-        builtin echo -ne "${STAT_OPT}\n"
-    done
-    test ${SHELL_NAME} = "zsh" && unsetopt sh_word_split
-}
-
-
-function get_signal_name {
-    local SIGNAL_NAME=$(builtin kill -l $1 2>/dev/null)
-    if [ $? -ne 0 ]; then
-        SIGNAL_NAME='unknown signal'
-    fi
-    builtin echo -n $SIGNAL_NAME
-}
-
-
-function calc_times_diff {
-    local I=1
-    local DIFF_LIST=''
-    local DIFF
-    local NEW_TIMES
-    local TEMP_VAR
-
-    NEW_TIMES=$(get_times_for_pid ${$})
-    test ${SHELL_NAME} = "zsh" && setopt sh_word_split
-    for TIME in $NEW_TIMES; do
-        (( TEMP_VAR = TIME - PROMPT_SUMMARY_LAST_TIME_USAGE[I] ))
-        PROMPT_SUMMARY_TIME_DIFF[${I}]=${TEMP_VAR}
-        PROMPT_SUMMARY_LAST_TIME_USAGE[$I]=${TIME}
-        (( I++ ))
-    done
-    test ${SHELL_NAME} = "zsh" && unsetopt sh_word_split
-}
-
-
-function format_time {
-    local TIME=$1
-    local LENGTH=${#TIME}
-    while [ $LENGTH -lt 3 ]; do
-        TIME="0$TIME"
-        (( LENGTH++ ))
-    done
-    local TIME_MILLISECONDS=${TIME: -2}
-    local TIME_SECONDS=${TIME:0:$LENGTH-2}
-    local TIME_MINUTES=0
-    (( TIME_MINUTES = TIME_SECONDS / 60 ))
-    (( TIME_SECONDS = TIME_SECONDS % 60 ))
-    builtin echo -n "${TIME_MINUTES}m${TIME_SECONDS}.${TIME_MILLISECONDS}s"
-}
-
-
-function color_per_exit_code {
-    if [ $PROMPT_SUMMARY_EXIT_CODE -eq 0 ]; then
-        PROMPT_SUMMARY_EXIT_CODE_COLOR='33'
-    else
-        PROMPT_SUMMARY_EXIT_CODE_COLOR='31'
-    fi
-}
-
-
-function calc_variable_string_length {
+# TODO: reuse old fill string as long as screen size has not changed.
+function get_fill_string {
+    # Calculate variable string length.
     ((
         PROMPT_SUMMARY_STRING_LENGTH=
         ${#PROMPT_SUMMARY_EXIT_CODE}+
@@ -149,23 +48,7 @@ function calc_variable_string_length {
         ${PROMPT_SUMMARY_VARS[10]}+
         ${#PROMPT_SUMMARY_VARS[1]}
     ))
-}
 
-
-# Print length of all
-function calc_static_variable_list_length {
-    ((
-        PROMPT_SUMMARY_VARS[10] =
-        ${#PROMPT_SUMMARY_VARS[11]}+
-        ${#PROMPT_SUMMARY_VARS[12]}+
-        ${#PROMPT_SUMMARY_VARS[14]}
-    ))
-}
-
-
-# TODO: reuse old fill string as long as screen size has not changed.
-function get_fill_string {
-    calc_variable_string_length
     local FILL_STRING_LENGTH=$COLUMNS
     #  + ${PROMPT_SUMMARY_VARS[10]}
     (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 83) ))
@@ -186,20 +69,85 @@ function get_fill_string {
 }
 
 
+# Calculate all variables which are later used by PROMPT_COMMAND.
 function pre_prompt {
     PROMPT_SUMMARY_EXIT_CODE=$(builtin echo $?)
-    color_per_exit_code
-    if [ $PROMPT_SUMMARY_EXIT_CODE -gt 128 ]; then
-        if [ !$(to_lower "x_${PROMPT_SUMMARY_OPTION_SHOW_SIGNAL}") = 'x_no' ]; then
-            local SIGNAL_NO=$PROMPT_SUMMARY_EXIT_CODE
-            (( SIGNAL_NO-=128 ))
-            PROMPT_SUMMARY_EXIT_CODE="${PROMPT_SUMMARY_EXIT_CODE} ($(get_signal_name ${SIGNAL_NO}))"
-        fi
+
+    # Set global PROMPT_SUMMARY_EXIT_CODE_COLOR variable to a shell escape
+    # color index. If the last command succeeded use a normal unobtrusive
+    # color. On error us a color like red.
+    # TODO: Make colora config variables
+    if [ $PROMPT_SUMMARY_EXIT_CODE -eq 0 ]; then
+        PROMPT_SUMMARY_EXIT_CODE_COLOR='33'
+    else
+        PROMPT_SUMMARY_EXIT_CODE_COLOR='31'
     fi
 
-    calc_times_diff
-    PROMPT_SUMMARY_FORMATED_TIME_USER=$(format_time ${PROMPT_SUMMARY_TIME_DIFF[3]})
-    PROMPT_SUMMARY_FORMATED_TIME_SYS=$(format_time ${PROMPT_SUMMARY_TIME_DIFF[4]})
+    if [ $PROMPT_SUMMARY_EXIT_CODE -gt 128 ]; then
+        local SIGNAL_NO=$PROMPT_SUMMARY_EXIT_CODE
+        (( SIGNAL_NO-=128 ))
+
+        # Convert signal number to signal name.
+        local SIGNAL_NAME=$(builtin kill -l $SIGNAL_NO 2>/dev/null)
+        if [ $? -ne 0 ]; then
+            SIGNAL_NAME='unknown signal'
+        fi
+        builtin echo -n $SIGNAL_NAME
+
+        PROMPT_SUMMARY_EXIT_CODE="${PROMPT_SUMMARY_EXIT_CODE} ($(get_signal_name ${SIGNAL_NO}))"
+    fi
+
+    # Calculate differences between old and new timings.
+    local I
+    local J
+    local DIFF_LIST=''
+    local DIFF
+    local NEW_TIMES=''
+    local TEMP_VAR
+    local TIME
+    test ${SHELL_NAME} = 'zsh' && setopt sh_word_split
+    local STAT=''
+    builtin read STAT < /proc/${$}/stat
+    I=0
+    J=0
+    for STAT_OPT in $STAT; do # Get the 4 timing values for the own pid.
+
+        (( I++ ))
+        if [ $I -lt 14 ]; then
+            continue
+        fi
+        if [ $I -gt 17 ]; then
+            break
+        fi
+        (( J++ ))
+        (( TEMP_VAR = STAT_OPT - PROMPT_SUMMARY_LAST_TIME_USAGE[J] ))
+        PROMPT_SUMMARY_TIME_DIFF[${J}]=${TEMP_VAR}
+        PROMPT_SUMMARY_LAST_TIME_USAGE[$J]=${STAT_OPT}
+    done
+    test ${SHELL_NAME} = 'zsh' && unsetopt sh_word_split
+
+    # Format /proc single digit time to format
+    # [MINUTES]m[SECONDS].[MILLISECONDS]s
+    I=76
+    local LENGTH
+    local TIME_MILLISECONDS
+    local TIME_SECONDS
+    local TIME_MINUTES
+    test ${SHELL_NAME} = 'zsh' && setopt sh_word_split
+    for TIME in ${PROMPT_SUMMARY_TIME_DIFF[3]} ${PROMPT_SUMMARY_TIME_DIFF[4]}; do
+        LENGTH=${#TIME}
+        while [ $LENGTH -lt 3 ]; do
+            TIME="0$TIME"
+            (( LENGTH++ ))
+        done
+        TIME_MILLISECONDS=${TIME: -2}
+        TIME_SECONDS=${TIME:0:$LENGTH-2}
+        (( TIME_MINUTES = TIME_SECONDS / 60 ))
+        (( TIME_SECONDS = TIME_SECONDS % 60 ))
+        PROMPT_SUMMARY_VARS[${I}]="${TIME_MINUTES}m${TIME_SECONDS}.${TIME_MILLISECONDS}s"
+        (( I++ ))
+    done
+    test ${SHELL_NAME} = 'zsh' && unsetopt sh_word_split
 
     if [ "${PWD}" != "${PROMPT_SUMMARY_VARS[1]}" ]; then
         PROMPT_SUMMARY_VARS[1]="${PWD}"
@@ -207,7 +155,7 @@ function pre_prompt {
 }
 
 
-# Command line interface
+# Command line interface to aftermath.
 function aftermath {
     local HELP="
 
@@ -262,7 +210,6 @@ Valid commands are:
 }
 
 
-
 PROMPT_COMMAND=pre_prompt
 
 
@@ -280,5 +227,19 @@ case ${SHELL_NAME} in
         ;;
 esac
 
-init_prompt_summary
-PROMPT_SUMMARY_LOADED=yes
+
+# Init variables.
+for I in $(seq 4); do
+    PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=0
+done
+PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=0
+PROMPT_SUMMARY_FILL_STRING=''
+PROMPT_SUMMARY_VARS[11]=$(ps aux | grep ${$} | head -n 1 | sed -e 's/\ \+/\ /g' | cut -f 7 -d ' ') # Get own TTY
+PROMPT_SUMMARY_VARS[12]="$(hostname)"
+
+((
+    PROMPT_SUMMARY_VARS[10]=
+    ${#PROMPT_SUMMARY_VARS[11]}+
+    ${#PROMPT_SUMMARY_VARS[12]}+
+    ${#PROMPT_SUMMARY_VARS[14]}
+))
