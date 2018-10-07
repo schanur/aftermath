@@ -243,3 +243,39 @@ PROMPT_SUMMARY_VARS[12]="$(hostname)"
     ${#PROMPT_SUMMARY_VARS[12]}+
     ${#PROMPT_SUMMARY_VARS[14]}
 ))
+
+
+# Default config values.
+#   Colors:
+AFTERMATH[default_background_color]='100'
+AFTERMATH[default_decorator_color]='37'
+AFTERMATH[default_field_name_color]='36'
+AFTERMATH[default_field_value_color]='33'
+AFTERMATH[default_field_error_value_color]='31'
+#   Decorator elements:
+AFTERMATH[default_decorator_start]='---=[ '
+AFTERMATH[default_decorator_end]=' }=---'
+AFTERMATH[default_decorator_field_separator]=' | '
+AFTERMATH[default_decorator_line_fill]='-'
+#   List of fields in order of visual representation:
+AFTERMATH[default_decorator_line_fill]='ret user sys pid tty shell hostname dir'
+#   Format string:
+AFTERMATH[default_format_str]='' # Currently unused
+
+# For each config variable that is not set by user, load default values.
+#   Colors:
+if [ -z "${AFTERMATH[background_color]}" ];          then AFTERMATH[background_color]="${AFTERMATH[default_background_color]}"; fi
+if [ -z "${AFTERMATH[decorator_color]}" ];           then AFTERMATH[decorator_color]="${AFTERMATH[default_decorator_color]}"; fi
+if [ -z "${AFTERMATH[field_name_color]}" ];          then AFTERMATH[field_name_color]="${AFTERMATH[default_field_name_color]}"; fi
+if [ -z "${AFTERMATH[field_value_color]}" ];         then AFTERMATH[field_value_color]="${AFTERMATH[default_field_value_color]}"; fi
+if [ -z "${AFTERMATH[field_error_value_color]}" ];   then AFTERMATH[field_error_value_color]="${AFTERMATH[default_field_error_value_color]}"; fi
+#   Decorator elements:
+if [ -z "${AFTERMATH[decorator_start]}" ];           then AFTERMATH[decorator_start]="${AFTERMATH[default_decorator_start]}"; fi
+if [ -z "${AFTERMATH[decorator_end]}" ];             then AFTERMATH[decorator_end]="${AFTERMATH[default_decorator_end]}"; fi
+if [ -z "${AFTERMATH[decorator_field_separator]}" ]; then AFTERMATH[decorator_field_separator]="${AFTERMATH[default_decorator_field_separator]}"; fi
+if [ -z "${AFTERMATH[decorator_start]}" ];           then AFTERMATH[decorator_start]="${AFTERMATH[default_decorator_start]}"; fi
+#   List of fields in order of visual representation:
+if [ -z "${AFTERMATH[decorator_line_fill]}" ];       then AFTERMATH[decorator_line_fill]="${AFTERMATH[default_decorator_line_fill]}"; fi
+#   Format string:
+if [ -z "${AFTERMATH[format_str]}" ];                then AFTERMATH[format_str]="${AFTERMATH[default_format_str]}"; fi
+
