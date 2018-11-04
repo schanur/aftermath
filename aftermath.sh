@@ -1,6 +1,35 @@
 declare -a PROMPT_SUMMARY_LAST_TIME_USAGE
 declare -a PROMPT_SUMMARY_TIME_DIFF
 
+
+# Config
+#   FORMAT_STR
+#     Available format string variables:
+#      ret                Return code of last command.
+#      user_time          Userspace time of last processed command.
+#      sys_time           Kernel time of last processed command.
+#      pid                Process ID of this shell.
+#      tty                Name of TTY/PTS that is used by this shell session.
+#      shell              Running shell. Currently supported are Bash and Zsh.
+#      hostname
+#      dir                Current working directory.
+#
+# BACKGROUND_COLOR        Background color. Defaults to dark gray.
+# DECORATOR_COLOR         Color of all characters that separates fields and decorates the line.
+# FIELD_NAME_COLOR        Color of field name.
+# FIELD_VALUE_COLOR       Color of field value
+# FIELD_ERROR_VALUE_COLOR Color of a field when it tries to suggest an abnormal value (exit/return code != 0)
+
+BG_COL_ESC='\033[1;100m'
+BG_COL_RESET_ESC='\033[1;49m'
+DECORATOR_COL_ESC='\033[1;37m'
+FIELD_NAME_COL_ESC='\033[1;36m'
+FIELD_VALUE_COL_ESC='\033[1;33m'
+FG_COL_RESET_ESC='\033[1;'
+
+# FIELD_NAME_COLOR
+# Field_VALUE_COLOR
+
 # 0  ???
 # 1  working directory;
 # 2  working directory string length
@@ -24,6 +53,8 @@ declare -a PROMPT_SUMMARY_TIME_DIFF
 
 # 80 Line separation string
 # 81 Current formated aftermath line
+
+declare -A AFTERMATH
 declare -a PROMPT_SUMMARY_VARS
 
 
@@ -36,40 +67,10 @@ else
     return
 fi
 
-
-# TODO: reuse old fill string as long as screen size has not changed.
-function get_fill_string {
-    # Calculate variable string length.
-    ((
-        PROMPT_SUMMARY_STRING_LENGTH=
-        ${#PROMPT_SUMMARY_EXIT_CODE}+
-        ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
-        ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
-        ${PROMPT_SUMMARY_VARS[10]}+
-        ${#PROMPT_SUMMARY_VARS[1]}
-    ))
-
-    local FILL_STRING_LENGTH=$COLUMNS
-    #  + ${PROMPT_SUMMARY_VARS[10]}
-    (( FILL_STRING_LENGTH -= ($PROMPT_SUMMARY_STRING_LENGTH + 83) ))
-    if [ $FILL_STRING_LENGTH -ne $PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH ]; then
-        PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=$FILL_STRING_LENGTH
-        local FILL_STRING=""
-        while [ $FILL_STRING_LENGTH -gt 15 ]; do
-            (( FILL_STRING_LENGTH-=16 ))
-            FILL_STRING=$FILL_STRING----------------
-        done
-        while [ $FILL_STRING_LENGTH -gt 0 ]; do
-            (( FILL_STRING_LENGTH-- ))
-            FILL_STRING=$FILL_STRING-
-        done
-        PROMPT_SUMMARY_FILL_STRING=$FILL_STRING
-    fi
-    builtin echo -n $PROMPT_SUMMARY_FILL_STRING
-}
+AFTERMATH[shell_name]="${SHELL_NAME}"
 
 
-# Calculate all variables which are later used by PROMPT_COMMAND.
+# Calculate all variables which are later used by PROMPT_COMMAND. Then build the string which represents the whole aftermath line.
 function pre_prompt {
     PROMPT_SUMMARY_EXIT_CODE=$(builtin echo $?)
 
@@ -94,7 +95,7 @@ function pre_prompt {
         fi
         builtin echo -n $SIGNAL_NAME
 
-        PROMPT_SUMMARY_EXIT_CODE="${PROMPT_SUMMARY_EXIT_CODE} ($(get_signal_name ${SIGNAL_NO}))"
+        PROMPT_SUMMARY_EXIT_CODE="${PROMPT_SUMMARY_EXIT_CODE} (${SIGNAL_NAME}))"
     fi
 
     # Calculate differences between old and new timings.
@@ -152,6 +153,28 @@ function pre_prompt {
     if [ "${PWD}" != "${PROMPT_SUMMARY_VARS[1]}" ]; then
         PROMPT_SUMMARY_VARS[1]="${PWD}"
     fi
+
+
+    # Calculate variable string length.
+    ((
+        AFTERMATH[field_value_length_sum]=
+        ${#PROMPT_SUMMARY_EXIT_CODE}+
+        ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
+        ${#PROMPT_SUMMARY_FORMATED_TIME_USER}+
+        ${PROMPT_SUMMARY_VARS[10]}+
+        ${#PROMPT_SUMMARY_VARS[1]}
+    ))
+
+    AFTERMATH[columns]=${COLUMNS}
+    if [ ${AFTERMATH[field_value_length_sum]} -ne ${AFTERMATH[last_field_value_length_sum]} ] \
+        || [ ${AFTERMATH[columns]} -ne ${AFTERMATH[columns]} ] ; then
+        local FILL_STRING_LENGTH=${AFTERMATH[columns]}
+        (( FILL_STRING_LENGTH -= (AFTERMATH[field_value_length_sum] + 100) ))
+        AFTERMATH[fill_string]=${AFTERMATH[fill_string_stock]:0:${FILL_STRING_LENGTH}}
+        AFTERMATH[last_field_value_length_sum]=${AFTERMATH[field_value_length_sum]}
+        AFTERMATH[last_columns]=${AFTERMATH[columns]}
+    fi
+
 }
 
 
@@ -186,10 +209,46 @@ Valid commands are:
                 fi
                 (( I = I + 1 ))
             done
+
+            case "${AFTERMATH[shell_name]}" in
+                zsh)
+                # Zsh array iteration
+                # local DEBUG_VARS_ZSH_PROGRAM='
+                # echo "###### ${AFTERMATH[#]} ######"
+                # local aaa='for KEY VALUE in "${(kv)AFTERMATH[@]}"; do
+                #     echo ">> $KEY = $VALUE <<"
+                #     echo "---"
+                # done'
+                # eval $aaa
+                # $DEBUG_VARS_ZSH_PROGRAM
+                ;;
+                bash)
+                    # Bash array iteration
+                    for KEY in "${!AFTERMATH[@]}"; do
+                        echo "${KEY} = ${AFTERMATH[$KEY]}"
+                    done
+                    ;;
+            esac
             ;;
 
         'help'|'--help'|'-h')
             echo ${HELP}
+            ;;
+
+        'private__color_num_to_esc_seq')
+            if [ ${#} -eq 2 ]; then
+                local COLOR_NUM="${2}"
+                case "${AFTERMATH[shell_name]}" in
+                    zsh)
+                        local ESC_COLOR=$'\033[1;'
+                        ESC_COLOR="${ESC_COLOR}${COLOR_NUM}mCOLOR"
+                        echo "${ESC_COLOR}"
+                        ;;
+                    bash)
+                        true
+                        ;;
+                esac
+            fi
             ;;
 
         '')
@@ -208,42 +267,6 @@ Valid commands are:
 
     esac
 }
-
-
-PROMPT_COMMAND=pre_prompt
-
-
-PROMPT_SUMMARY_VARS[14]="unknown"
-case ${SHELL_NAME} in
-    bash)
-        PROMPT_SUMMARY_VARS[14]="bash"
-        CURRENT_PATH="$(dirname ${BASH_SOURCE})"
-        source "${CURRENT_PATH}/lib/bash.sh"
-        ;;
-    zsh)
-        PROMPT_SUMMARY_VARS[14]="zsh"
-        CURRENT_PATH="$(dirname $(readlink -e ${(%):-%x}))"
-        source "${CURRENT_PATH}/lib/zsh.sh"
-        ;;
-esac
-
-
-# Init variables.
-for I in $(seq 4); do
-    PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=0
-done
-PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=0
-PROMPT_SUMMARY_FILL_STRING=''
-PROMPT_SUMMARY_VARS[11]=$(ps aux | grep ${$} | head -n 1 | sed -e 's/\ \+/\ /g' | cut -f 7 -d ' ') # Get own TTY
-PROMPT_SUMMARY_VARS[12]="$(hostname)"
-
-((
-    PROMPT_SUMMARY_VARS[10]=
-    ${#PROMPT_SUMMARY_VARS[11]}+
-    ${#PROMPT_SUMMARY_VARS[12]}+
-    ${#PROMPT_SUMMARY_VARS[14]}
-))
-
 
 # Default config values.
 #   Colors:
@@ -279,3 +302,66 @@ if [ -z "${AFTERMATH[decorator_line_fill]}" ];       then AFTERMATH[decorator_li
 #   Format string:
 if [ -z "${AFTERMATH[format_str]}" ];                then AFTERMATH[format_str]="${AFTERMATH[default_format_str]}"; fi
 
+
+# Convert color configuration to escape sequence cache.
+
+# BACKGROUND_COLOR        Background color. Defaults to dark gray.
+# DECORATOR_COLOR         Color of all characters that separates fields and decorates the line.
+# FIELD_NAME_COLOR        Color of field name.
+# FIELD_VALUE_COLOR       Color of field value
+# FIELD_ERROR_VALUE_COLOR
+
+# BG_COL_ESC='\033[1;100m'
+# BG_COL_RESET_ESC='\033[1;49m'
+# DECORATOR_COL_ESC='\033[1;37m'
+# FIELD_NAME_COL_ESC='\033[1;36m'
+# FIELD_VALUE_COL_ESC='\033[1;33m'
+# FG_COL_RESET_ESC='\033[1;'
+
+AFTERMATH[last_columns]=0 # Track if terminal got resized.
+AFTERMATH[last_field_value_length_sum]=0
+AFTERMATH[fill_string_stock]="$(printf %300s |tr ' ' '-')"
+AFTERMATH[fill_string]=${AFTERMATH[fill_string_stock]:0:10}
+
+
+PROMPT_SUMMARY_VARS[14]="unknown"
+case ${SHELL_NAME} in
+    bash)
+        PROMPT_SUMMARY_VARS[14]="bash"
+        CURRENT_PATH="$(dirname ${BASH_SOURCE})"
+        PROMPT_COMMAND="pre_prompt"
+        ;;
+    zsh)
+        PROMPT_SUMMARY_VARS[14]="zsh"
+        CURRENT_PATH="$(dirname $(readlink -e ${(%):-%x}))"
+        source "${CURRENT_PATH}/lib/zsh.sh"
+        ;;
+
+esac
+
+AFTERMATH[generated_line]=$'\033[1;100m\033[1;37m---=[ \033[1;36mret: \033[1;${PROMPT_SUMMARY_EXIT_CODE_COLOR}m$PROMPT_SUMMARY_EXIT_CODE \033[1;37m| \033[1;36muser: \033[1;33m${PROMPT_SUMMARY_VARS[77]} \033[1;36msys: \033[1;33m${PROMPT_SUMMARY_VARS[76]} \033[1;37m| \033[1;36mpid: \033[1;33m$$ \033[1;37m| \033[1;36mtty: \033[1;33m${PROMPT_SUMMARY_VARS[11]} \033[1;37m| \033[1;36mshell: \033[1;33m${PROMPT_SUMMARY_VARS[14]} \033[1;37m| \033[1;36mhostname: \033[1;33m${PROMPT_SUMMARY_VARS[12]} \033[1;37m| \033[1;36mpath: \033[1;33m${PROMPT_SUMMARY_VARS[1]} \033[1;37m]=---${AFTERMATH[fill_string]}\033[1;49m\n$(tput sgr0)'
+
+case ${SHELL_NAME} in
+    bash)
+        PS1="${AFTERMATH[generated_line]}"
+        ;;
+    zsh)
+        PROMPT="${AFTERMATH[generated_line]}"
+        ;;
+esac
+
+# Init variables.
+for I in $(seq 4); do
+    PROMPT_SUMMARY_LAST_TIME_USAGE[${I}]=0
+done
+PROMPT_SUMMARY_LAST_FILL_STRING_LENGTH=0
+PROMPT_SUMMARY_FILL_STRING=''
+PROMPT_SUMMARY_VARS[11]=$(ps aux | grep ${$} | head -n 1 | sed -e 's/\ \+/\ /g' | cut -f 7 -d ' ') # Get own TTY pid
+PROMPT_SUMMARY_VARS[12]="$(hostname)"
+
+((
+    PROMPT_SUMMARY_VARS[10]=
+    ${#PROMPT_SUMMARY_VARS[11]}+
+    ${#PROMPT_SUMMARY_VARS[12]}+
+    ${#PROMPT_SUMMARY_VARS[14]}
+))
