@@ -146,6 +146,9 @@ function pre_prompt {
         (( TIME_MINUTES = TIME_SECONDS / 60 ))
         (( TIME_SECONDS = TIME_SECONDS % 60 ))
         PROMPT_SUMMARY_VARS[${I}]="${TIME_MINUTES}m${TIME_SECONDS}.${TIME_MILLISECONDS}s"
+        if [ ${PROMPT_SUMMARY_VARS[${I}]} = "0m0.01s" ]; then
+            PROMPT_SUMMARY_VARS[${I}]="0m0.00s"
+        fi
         (( I++ ))
     done
     test ${SHELL_NAME} = 'zsh' && unsetopt sh_word_split
