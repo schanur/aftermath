@@ -93,8 +93,6 @@ function pre_prompt {
         if [ $? -ne 0 ]; then
             SIGNAL_NAME='unknown signal'
         fi
-        builtin echo -n $SIGNAL_NAME
-
         PROMPT_SUMMARY_EXIT_CODE="${PROMPT_SUMMARY_EXIT_CODE} (${SIGNAL_NAME}))"
     fi
 
