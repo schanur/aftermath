@@ -1,7 +1,6 @@
 declare -a PROMPT_SUMMARY_LAST_TIME_USAGE
 declare -a PROMPT_SUMMARY_TIME_DIFF
 
-
 # Config
 #   FORMAT_STR
 #     Available format string variables:
@@ -32,7 +31,8 @@ FG_COL_RESET_ESC='\033[1;'
 
 # 0  ???
 # 1  working directory;
-# 2  working directory string length
+# 2  working directory truncated;
+# 3  working directory string length
 
 # 10 Static variable list length
 # 11 TTY
@@ -104,6 +104,7 @@ function pre_prompt {
     local NEW_TIMES=''
     local TEMP_VAR
     local TIME
+    local CHAR_SPACE_LEFT
     test ${SHELL_NAME} = 'zsh' && setopt sh_word_split
     local STAT=''
     builtin read STAT < /proc/${$}/stat
@@ -155,6 +156,9 @@ function pre_prompt {
         PROMPT_SUMMARY_VARS[1]="${PWD}"
     fi
 
+    # Get git status string.
+    # local IS_GIT_REPO=1
+    # git
 
     # Calculate variable string length.
     ((
@@ -170,7 +174,7 @@ function pre_prompt {
     if [ ${AFTERMATH[field_value_length_sum]} -ne ${AFTERMATH[last_field_value_length_sum]} ] \
         || [ ${AFTERMATH[columns]} -ne ${AFTERMATH[columns]} ] ; then
         local FILL_STRING_LENGTH=${AFTERMATH[columns]}
-        (( FILL_STRING_LENGTH -= (AFTERMATH[field_value_length_sum] + 100) ))
+        (( FILL_STRING_LENGTH -= (AFTERMATH[field_value_length_sum] + 80) ))
         AFTERMATH[fill_string]=${AFTERMATH[fill_string_stock]:0:${FILL_STRING_LENGTH}}
         AFTERMATH[last_field_value_length_sum]=${AFTERMATH[field_value_length_sum]}
         AFTERMATH[last_columns]=${AFTERMATH[columns]}
@@ -269,6 +273,11 @@ Valid commands are:
     esac
 }
 
+
+# AFTERMATH[generated_line]=$'\033[1;100m\033[1;37m${AFTERMATH[fill_string]}---=[ \033[1;36mret: \033[1;${PROMPT_SUMMARY_EXIT_CODE_COLOR}m$PROMPT_SUMMARY_EXIT_CODE \033[1;37m| \033[1;36muser: \033[1;33m${PROMPT_SUMMARY_VARS[77]} \033[1;36msys: \033[1;33m${PROMPT_SUMMARY_VARS[76]} \033[1;37m| \033[1;36mpid: \033[1;33m$$ \033[1;37m| \033[1;36mtty: \033[1;33m${PROMPT_SUMMARY_VARS[11]} \033[1;37m| \033[1;36msh: \033[1;33m${PROMPT_SUMMARY_VARS[14]} \033[1;37m| \033[1;36mhost: \033[1;33m${PROMPT_SUMMARY_VARS[12]} \033[1;37m| \033[1;36mpath: \033[1;33m${PROMPT_SUMMARY_VARS[1]} \033[1;37m]=---\033[1;49m\n$(tput sgr0)'
+AFTERMATH[generated_line]=$'\033[1;36mret: \033[1;${PROMPT_SUMMARY_EXIT_CODE_COLOR}m$PROMPT_SUMMARY_EXIT_CODE \033[1;37m| \033[1;36muser: \033[1;33m${PROMPT_SUMMARY_VARS[77]} \033[1;36msys: \033[1;33m${PROMPT_SUMMARY_VARS[76]} \033[1;37m| \033[1;36mpid: \033[1;33m$$ \033[1;37m| \033[1;36mtty: \033[1;33m${PROMPT_SUMMARY_VARS[11]} \033[1;37m| \033[1;36msh: \033[1;33m${PROMPT_SUMMARY_VARS[14]} \033[1;37m| \033[1;36mhost: \033[1;33m${PROMPT_SUMMARY_VARS[12]} \033[1;37m| \033[1;36mpath: \033[1;33m${PROMPT_SUMMARY_VARS[1]}'
+
+
 # Default config values.
 #   Colors:
 AFTERMATH[default_background_color]='100'
@@ -340,14 +349,16 @@ case ${SHELL_NAME} in
 
 esac
 
-AFTERMATH[generated_line]=$'\033[1;100m\033[1;37m${AFTERMATH[fill_string]}---=[ \033[1;36mret: \033[1;${PROMPT_SUMMARY_EXIT_CODE_COLOR}m$PROMPT_SUMMARY_EXIT_CODE \033[1;37m| \033[1;36muser: \033[1;33m${PROMPT_SUMMARY_VARS[77]} \033[1;36msys: \033[1;33m${PROMPT_SUMMARY_VARS[76]} \033[1;37m| \033[1;36mpid: \033[1;33m$$ \033[1;37m| \033[1;36mtty: \033[1;33m${PROMPT_SUMMARY_VARS[11]} \033[1;37m| \033[1;36mshell: \033[1;33m${PROMPT_SUMMARY_VARS[14]} \033[1;37m| \033[1;36mhostname: \033[1;33m${PROMPT_SUMMARY_VARS[12]} \033[1;37m| \033[1;36mpath: \033[1;33m${PROMPT_SUMMARY_VARS[1]} \033[1;37m]=---\033[1;49m\n$(tput sgr0)'
+# AFTERMATH[generated_line]=$'\033[1;100m\033[1;37m${AFTERMATH[fill_string]}---=[ ${AFTERMATH[formated_key_values_truncated]} \033[1;37m]=---\033[1;49m\n$(tput sgr0)'
+# AFTERMATH[generated_line]=$'\033[1;100m\033[1;37m${AFTERMATH[fill_string]}---=[ \033[1;36mret: \033[1;${PROMPT_SUMMARY_EXIT_CODE_COLOR}m$PROMPT_SUMMARY_EXIT_CODE \033[1;37m| \033[1;36muser: \033[1;33m${PROMPT_SUMMARY_VARS[77]} \033[1;36msys: \033[1;33m${PROMPT_SUMMARY_VARS[76]} \033[1;37m| \033[1;36mpid: \033[1;33m$$ \033[1;37m| \033[1;36mtty: \033[1;33m${PROMPT_SUMMARY_VARS[11]} \033[1;37m| \033[1;36msh: \033[1;33m${PROMPT_SUMMARY_VARS[14]} \033[1;37m| \033[1;36mhost: \033[1;33m${PROMPT_SUMMARY_VARS[12]} \033[1;37m| \033[1;36mpath: \033[1;33m${PROMPT_SUMMARY_VARS[1]} \033[1;37m]=---\033[1;49m\n$(tput sgr0)'
 
 case ${SHELL_NAME} in
     bash)
-        PS1="${AFTERMATH[generated_line]}"
+        PS1="\033[1;100m\033[1;37m${AFTERMATH[fill_string]}---=[ ${AFTERMATH[generated_line]} \033[1;37m]=---\033[1;49m\n$(tput sgr0)"
         ;;
     zsh)
-        PROMPT="${AFTERMATH[generated_line]}"
+        # PROMPT="${AFTERMATH[generated_line]} \033[1;37m]=---\033[1;49m\n$(tput sgr0)"
+        PROMPT="\033[1;100m\033[1;37m${AFTERMATH[fill_string]}---=[ ${AFTERMATH[generated_line]} \033[1;37m]=---\033[1;49m\n$(tput sgr0)"
         ;;
 esac
 
